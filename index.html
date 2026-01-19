@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Caesar Cipher | Matematika Diskrit</title>
+
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    font-family: Arial, sans-serif;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* ===== APP BOX ===== */
+.container {
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(12px);
+    padding: 25px;
+    width: 380px;
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    z-index: 2;
+}
+
+h1 { text-align: center; margin-bottom: 5px; }
+.subtitle { text-align: center; font-size: 13px; opacity: .8; margin-bottom: 15px; }
+
+textarea, input {
+    width: 100%;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #00c6ff;
+    font-weight: bold;
+    cursor: pointer;
+}
+button:hover { background: #00a8e8; }
+
+.result { margin-top: 15px; font-size: 14px; }
+
+/* ===== FLOATING FORMULA ===== */
+.formula {
+    position: absolute;
+    font-size: 18px;
+    opacity: 0;
+    filter: blur(8px);
+    animation: floatBlur 12s infinite;
+    cursor: pointer;
+    transition: transform .4s;
+}
+
+.f1 { left: 10%; animation-delay: 0s; }
+.f2 { left: 60%; animation-delay: 4s; }
+.f3 { left: 35%; animation-delay: 8s; }
+
+@keyframes floatBlur {
+    0%   { bottom: -10%; opacity: 0; filter: blur(10px); }
+    20%  { opacity: 1; filter: blur(0); }
+    80%  { opacity: 1; filter: blur(0); }
+    100% { bottom: 110%; opacity: 0; filter: blur(10px); }
+}
+
+.formula:hover {
+    color: #00c6ff;
+    transform: scale(1.15);
+}
+
+/* ===== EXPLODE EFFECT ===== */
+.explode span {
+    display: inline-block;
+    animation: explode 0.6s forwards;
+}
+
+@keyframes explode {
+    to {
+        transform: translate(
+            calc(-50px + 100px * var(--x)),
+            calc(-50px + 100px * var(--y))
+        ) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* ===== MODAL ===== */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.modal-content {
+    background: #1f2f3a;
+    padding: 20px;
+    width: 320px;
+    border-radius: 14px;
+    animation: fadeIn .4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(.9); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.close {
+    text-align: right;
+    cursor: pointer;
+    font-size: 14px;
+    opacity: .7;
+}
+.close:hover { opacity: 1; }
+</style>
+</head>
+
+<body>
+
+<!-- FLOATING FORMULAS -->
+<div class="formula f1" onclick="openFormula(this, 1)">E(x) = (x + k) mod 26</div>
+<div class="formula f2" onclick="openFormula(this, 2)">D(x) = (x − k) mod 26</div>
+<div class="formula f3" onclick="openFormula(this, 3)">|A| = 26</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+    <div class="modal-content">
+        <div class="close" onclick="closeModal()">✖ Tutup</div>
+        <h3 id="modalTitle"></h3>
+        <p id="modalText"></p>
+    </div>
+</div>
+
+<!-- APP -->
+<div class="container">
+    <h1>🔐 Caesar Cipher</h1>
+    <div class="subtitle">Implementasi Matematika Diskrit</div>
+
+    <textarea id="text" placeholder="Masukkan pesan..."></textarea>
+    <input type="number" id="shift" placeholder="Masukkan shift">
+
+    <button onclick="process()">Proses</button>
+
+    <div class="result">
+        <p><b>Ciphertext:</b> <span id="cipher"></span></p>
+        <p><b>Decrypt:</b> <span id="decrypt"></span></p>
+    </div>
+</div>
+
+<script>
+let activeFormula = null;
+
+function caesarEncrypt(text, shift) {
+    let r = "";
+    for (let c of text) {
+        if (/[a-zA-Z]/.test(c)) {
+            let base = c === c.toUpperCase() ? 65 : 97;
+            let x = c.charCodeAt(0) - base;
+            let y = (x + shift) % 26;
+            if (y < 0) y += 26;
+            r += String.fromCharCode(y + base);
+        } else r += c;
+    }
+    return r;
+}
+
+function process() {
+    let t = text.value;
+    let s = parseInt(shift.value);
+    cipher.innerText = caesarEncrypt(t, s);
+    decrypt.innerText = caesarEncrypt(cipher.innerText, -s);
+}
+
+/* ===== FORMULA INTERACTION ===== */
+function openFormula(el, type) {
+    activeFormula = el;
+    explodeText(el);
+    setTimeout(() => el.style.visibility = "hidden", 600);
+
+    modal.style.display = "flex";
+
+    if (type === 1) {
+        modalTitle.innerText = "Rumus Enkripsi";
+        modalText.innerText =
+            "E(x) = (x + k) mod 26 digunakan untuk menggeser posisi huruf dalam alfabet menggunakan aritmetika modular.";
+    }
+    if (type === 2) {
+        modalTitle.innerText = "Rumus Dekripsi";
+        modalText.innerText =
+            "D(x) = (x − k) mod 26 merupakan fungsi invers yang mengembalikan ciphertext ke plaintext.";
+    }
+    if (type === 3) {
+        modalTitle.innerText = "Himpunan Alfabet";
+        modalText.innerText =
+            "Alfabet adalah himpunan berhingga dengan 26 elemen, sehingga operasi menggunakan modulo 26.";
+    }
+}
+
+function explodeText(el) {
+    const text = el.innerText;
+    el.innerHTML = "";
+    el.classList.add("explode");
+
+    [...text].forEach(char => {
+        const span = document.createElement("span");
+        span.innerText = char;
+        span.style.setProperty("--x", Math.random());
+        span.style.setProperty("--y", Math.random());
+        el.appendChild(span);
+    });
+}
+
+function closeModal() {
+    modal.style.display = "none";
+
+    if (activeFormula) {
+        activeFormula.innerText = originalText(activeFormula);
+        activeFormula.classList.remove("explode");
+        activeFormula.style.visibility = "visible";
+    }
+}
+
+function originalText(el) {
+    if (el.classList.contains("f1")) return "E(x) = (x + k) mod 26";
+    if (el.classList.contains("f2")) return "D(x) = (x − k) mod 26";
+    return "|A| = 26";
+}
+</script>
+
+</body>
+</html>
